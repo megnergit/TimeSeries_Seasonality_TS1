@@ -1,11 +1,9 @@
 # Time Series Anlysis T1
 
-This is an exercise notebook for the fifth lesson of the kaggle course
-["Geospatial Analysis"](https://www.kaggle.com/learn/geospatial-analysis)
-offered by Alexis Cook and Jessica Li. The main goal of the lesson is
-to get used to __Proximity Analysis__, using `geopandas` methods such as
-`.distance`. We also learn how to use 
-`.unary_union` to connect multiple `POLYGON`s into one.
+This is a notebook for the kaggle course ["Time
+Series"](https://www.kaggle.com/learn/time-series) offered by Ryan
+Holbrook. The main goal of the course is to learn standard handlings
+in analysing time series data.
 
 ------------------------------------------------------------------
 ## How to run the Demo
@@ -17,11 +15,8 @@ to get used to __Proximity Analysis__, using `geopandas` methods such as
 ------------------------------------------------------------------
 ## Task
 
+  1. We have sales data 
 
-   Every day someone injured in New York City in a car accident.
-   If an ambulance can quickly rush into a nearby hospital with a patient
-   is a matter of life and death. We will review the records of daily car
-   crashes in New York City and the locations of hospitals there.
 
  1. Find out if there is any particularly vulnerable districts where
     it takes longer to transport the injured to a hospital.
