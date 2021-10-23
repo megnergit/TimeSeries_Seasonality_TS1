@@ -18,6 +18,10 @@ in analysing time series data.
  1. We have a sales record of stores in Ecuador. 
 
 
+https://www.kaggle.com/c/store-sales-time-series-forecasting
+
+https://www.kaggle.com/c/store-sales-time-series-forecasting/data
+
 ------------------------------------------------------------------
 ## Directory Tree
 ```
