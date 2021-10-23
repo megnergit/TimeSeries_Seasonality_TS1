@@ -15,14 +15,7 @@ in analysing time series data.
 ------------------------------------------------------------------
 ## Task
 
-  1. We have sales data 
-
-
- 1. Find out if there is any particularly vulnerable districts where
-    it takes longer to transport the injured to a hospital.
-
- 2. Create a recommender system to tell ambulance drivers
-    to which hospital (the nearest) they should transport the injured.
+ 1. We have a sales record of stores in Ecuador. 
 
 
 ------------------------------------------------------------------
