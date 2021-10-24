@@ -5,6 +5,9 @@ Series"](https://www.kaggle.com/learn/time-series) offered by Ryan
 Holbrook. The main goal of the course is to learn standard handlings
 in analysing time series data.
 
+[data ] store sales
+https://www.kaggle.com/c/store-sales-time-series-forecasting/data?select=oil.csv
+
 ------------------------------------------------------------------
 ## How to run the Demo
 

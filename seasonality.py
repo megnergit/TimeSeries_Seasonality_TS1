@@ -99,6 +99,7 @@
 # In[1]:
 
 
+
 import numpy as np
 
 def fourier_features(index, freq, order):
@@ -325,6 +326,8 @@ ax = y.plot(color='0.25', style='.', title="Tunnel Traffic - Seasonal Forecast")
 ax = y_pred.plot(ax=ax, label="Seasonal")
 ax = y_fore.plot(ax=ax, label="Seasonal Forecast", color='C3')
 _ = ax.legend()
+
+
 
 
 # ---
