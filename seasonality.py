@@ -178,17 +178,40 @@ fig.show()
 # -------------------------------------------------------
 
 # - check if index is continuous and no missing date
-
 # =======================================================
 
-fs = pd.Timedelta('1Y')/pd.Timedelta('1D')
-frequencies, spectrum = periodogram(
 
-    fs=fs,
-    detrend='linear',
-    window='boxcar',
-    scalint='spectrum'
-)
+fs = pd.Timedelta('1Y')/pd.Timedelta('1D')
+frequencies, spectrum = periodogram(tunnel['NumVehicles'],
+                                    fs=fs,
+                                    detrend='linear',
+                                    window='boxcar',
+                                    scaling='spectrum'
+                                    )
+
+trace = go.Scatter(x=frequencies,
+                   y=spectrum,
+                   fill='tozeroy',
+                   #                   fillcolor='coral',
+                   line=dict(color='coral'),
+                   line_shape='hvh')
+
+data = [trace]
+layout = go.Layout(height=640,
+                   font=dict(size=20),
+                   xaxis=dict(type='log'))
+
+fig = go.Figure(data=data, layout=layout)
+fig.show()
+
+# | detrend {'linear', 'constant'}
+# | window  {'boxcar', 'gaussian', ...} `scipy.signal.get_window`
+# | [shape of window functon](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window)
+# | scaling {'density', 'spectrum'} [V^2/Hz] (power spectrum) [V^2]
+
+
+# from  scipy.signal import get_window
+# =======================================================
 
 
 def plot_periodogram(ts, detrend='linear', ax=None):
