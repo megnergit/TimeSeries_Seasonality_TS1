@@ -37,39 +37,12 @@ df = pd.read_csv(
     parse_dates=['Date'],
 ).drop('Paperback', axis=1)
 
-df.head()
-
-
-# In[2]:
-
 
 DATA_DIR = '../input/ts-course-data/'
 
 
-# In[3]:
-
-
 df = pd.read_csv(DATA_DIR + 'book_sales.csv',
                  index_col='Date', parse_dates=['Date'])
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[4]:
-
-
-df.info()
-len(df)
-
-
-# In[5]:
-
-
-# In[6]:
 
 
 trace1 = go.Scatter(x=df.index, y=df['Hardcover'])
@@ -80,48 +53,7 @@ data = [trace1, trace2]
 fig = go.Figure(data=data)
 
 
-# In[7]:
-
-
 fig.show()
-
-
-# This series records the number of hardcover book sales at a retail store over 30 days. Notice that we have a single column of observations `Hardcover` with a time index `Date`.
-#
-# # Linear Regression with Time Series #
-#
-# For the first part of this course, we'll use the linear regression algorithm to construct forecasting models. Linear regression is widely used in practice and adapts naturally to even complex forecasting tasks.
-#
-# The **linear regression** algorithm learns how to make a weighted sum from its input features. For two features, we would have:
-#
-# ```
-# target = weight_1 * feature_1 + weight_2 * feature_2 + bias
-# ```
-#
-# During training, the regression algorithm learns values for the parameters `weight_1`, `weight_2`, and `bias` that best fit the `target`. (This algorithm is often called *ordinary least squares* since it chooses values that minimize the squared error between the target and the predictions.) The weights are also called *regression coefficients* and the `bias` is also called the *intercept* because it tells you where the graph of this function crosses the y-axis.
-#
-# ### Time-step features
-#
-# There are two kinds of features unique to time series: time-step features and lag features.
-#
-# Time-step features are features we can derive directly from the time index. The most basic time-step feature is the **time dummy**, which counts off time steps in the series from beginning to end.
-
-# In[8]:
-
-
-# In[9]:
-
-
-np.arange(10)
-
-
-# In[10]:
-
-
-df['Time'] = np.arange(len(df))
-
-
-# In[11]:
 
 
 trace1 = go.Scatter(x=df['Time'], y=df['Hardcover'])
@@ -143,102 +75,14 @@ ax = sns.regplot(x='Time', y='Hardcover', data=df)
 df['Lag_1'] = df['Hardcover'].shift(1)
 
 
-# In[14]:
-
-
-df.head(3)
-
-
-# In[15]:
-
-
 fig, ax = plt.subplots()
 ax = sns.regplot(x='Lag_1', y='Hardcover', data=df)
 ax.set_aspect('equal')
 ax.set_title('Lag Plot of Hardcover Sales')
 
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# In[16]:
-
-
 df['Time'] = np.arange(len(df.index))
 
 df.head()
-
-
-# Linear regression with the time dummy produces the model:
-#
-# ```
-# target = weight * time + bias
-# ```
-#
-# The time dummy then lets us fit curves to time series in a *time plot*, where `Time` forms the x-axis.
-
-# In[17]:
-
-
-plt.style.use("seaborn-whitegrid")
-plt.rc(
-    "figure",
-    autolayout=True,
-    figsize=(11, 4),
-    titlesize=18,
-    titleweight='bold',
-)
-plt.rc(
-    "axes",
-    labelweight="bold",
-    labelsize="large",
-    titleweight="bold",
-    titlesize=16,
-    titlepad=10,
-)
-get_ipython().run_line_magic('config', "InlineBackend.figure_format = 'retina'")
-
-fig, ax = plt.subplots()
-ax.plot('Time', 'Hardcover', data=df, color='0.75')
-ax = sns.regplot(x='Time', y='Hardcover', data=df,
-                 ci=None, scatter_kws=dict(color='0.25'))
-ax.set_title('Time Plot of Hardcover Sales')
-
-
-# Time-step features let you model **time dependence**. A series is time dependent if its values can be predicted from the time they occured. In the *Hardcover Sales* series, we can predict that sales later in the month are generally higher than sales earlier in the month.
-#
-# ### Lag features
-#
-# To make a **lag feature** we shift the observations of the target series so that they appear to have occured later in time. Here we've created a 1-step lag feature, though shifting by multiple steps is possible too.
-
-# In[18]:
 
 
 df['Lag_1'] = df['Hardcover'].shift(1)
@@ -254,9 +98,6 @@ df.head()
 # ```
 #
 # So lag features let us fit curves to *lag plots* where each observation in a series is plotted against the previous observation.
-
-# In[19]:
-
 
 fig, ax = plt.subplots()
 ax = sns.regplot(x='Lag_1', y='Hardcover', data=df,
@@ -278,31 +119,6 @@ ax.set_title('Lag Plot of Hardcover Sales')
 # *Tunnel Traffic* is a time series describing the number of vehicles traveling through the Baregg Tunnel in Switzerland each day from November 2003 to November 2005. In this example, we'll get some practice applying linear regression to time-step features and lag features.
 #
 # The hidden cell sets everything up.
-
-# In[20]:
-
-
-simplefilter("ignore")  # ignore warnings to clean up output cells
-
-# Set Matplotlib defaults
-plt.style.use("seaborn-whitegrid")
-plt.rc("figure", autolayout=True, figsize=(11, 4))
-plt.rc(
-    "axes",
-    labelweight="bold",
-    labelsize="large",
-    titleweight="bold",
-    titlesize=14,
-    titlepad=10,
-)
-plot_params = dict(
-    color="0.75",
-    style=".-",
-    markeredgecolor="0.25",
-    markerfacecolor="0.25",
-    legend=False,
-)
-get_ipython().run_line_magic('config', "InlineBackend.figure_format = 'retina'")
 
 
 # Load Tunnel Traffic dataset

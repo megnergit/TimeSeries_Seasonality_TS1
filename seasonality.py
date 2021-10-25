@@ -74,6 +74,7 @@ import plotly.graph_objs as go
 import kaleido
 from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
 from sklearn.linear_model import LinearRegression
+from scipy.signal import periodogram
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -147,51 +148,36 @@ fig.show()
 # | Here we concentrate on reproducing in-week trend.
 # | First let us have a look.
 
+tunnel = pd.read_csv(DATA_DIR/'tunnel.csv',
+                     dtype={'NumVehicles': 'float32'},
+                     parse_dates=['Day'],
+                     index_col='Day').to_period('D')
 
-X = tunnel.copy()
+tunnel['dayofweek'] = tunnel.index.dayofweek
+tunnel['Week'] = tunnel.index.asfreq('W')
 
-# days within a week
-X["day"] = X.index.dayofweek  # the x-axis (freq)
-X["week"] = X.index.week  # the seasonal period (period)
+data = []
+day_name = ('Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So')
 
-# days within a year
-X["dayofyear"] = X.index.dayofyear
-X["year"] = X.index.year
+for i, w in tunnel.groupby('Week'):
+    trace = go.Scatter(x=w['dayofweek'],
+                       y=w['NumVehicles'],
+                       name=i)
+
+    data.append(trace)
+
+layout = go.Layout(height=1024,
+                   xaxis=dict(categoryarray=day_name))
+fig = go.Figure(data=data, layout=layout)
+fig.show()
 
 # -------------------------------------------------------
+# | The trend is nicely seen that
+# | the trafic gradually goes up from Monday to Friday,
+# | and decreases toward Saturday and Sunday.
+# -------------------------------------------------------
+
 # =======================================================
-
-# # annotations: https://stackoverflow.com/a/49238256/5769929
-
-
-# def seasonal_plot(X, y, period, freq, ax=None):
-#     if ax is None:
-#         _, ax = plt.subplots()
-#     palette = sns.color_palette("husl", n_colors=X[period].nunique(),)
-#     ax = sns.lineplot(
-#         x=freq,
-#         y=y,
-#         hue=period,
-#         data=X,
-#         ci=False,
-#         ax=ax,
-#         palette=palette,
-#         legend=False,
-#     )
-#     ax.set_title(f"Seasonal Plot ({period}/{freq})")
-#     for line, name in zip(ax.lines, X[period].unique()):
-#         y_ = line.get_ydata()[-1]
-#         ax.annotate(
-#             name,
-#             xy=(1, y_),
-#             xytext=(6, 0),
-#             color=line.get_color(),
-#             xycoords=ax.get_yaxis_transform(),
-#             textcoords="offset points",
-#             size=14,
-#             va="center",
-#         )
-#     return ax
 
 
 def plot_periodogram(ts, detrend='linear', ax=None):
@@ -235,27 +221,25 @@ tunnel = tunnel.set_index("Day").to_period("D")
 
 # Let's take a look at seasonal plots over a week and over a year.
 
-# In[4]:
+# X = tunnel.copy()
 
+# # days within a week
+# X["day"] = X.index.dayofweek  # the x-axis (freq)
+# X["week"] = X.index.week  # the seasonal period (period)
 
-X = tunnel.copy()
+# # days within a year
+# X["dayofyear"] = X.index.dayofyear
+# X["year"] = X.index.year
+# fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(11, 6))
+# seasonal_plot(X, y="NumVehicles", period="week", freq="day", ax=ax0)
+# seasonal_plot(X, y="NumVehicles", period="year", freq="dayofyear", ax=ax1)
 
-# days within a week
-X["day"] = X.index.dayofweek  # the x-axis (freq)
-X["week"] = X.index.week  # the seasonal period (period)
+# =======================================================
+# | we will make two more pltos.
+# | 1. periodogram
+# | 2. lagplot
 
-# days within a year
-X["dayofyear"] = X.index.dayofyear
-X["year"] = X.index.year
-fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(11, 6))
-seasonal_plot(X, y="NumVehicles", period="week", freq="day", ax=ax0)
-seasonal_plot(X, y="NumVehicles", period="year", freq="dayofyear", ax=ax1)
-
-
-# Now let's look at the periodogram:
-
-# In[5]:
-
+# lagplot
 
 plot_periodogram(tunnel.NumVehicles)
 
@@ -381,3 +365,33 @@ _ = ax.legend()
 #     legend=False,
 # )
 # get_ipython().run_line_magic('config', "InlineBackend.figure_format = 'retina'")
+
+# # annotations: https://stackoverflow.com/a/49238256/5769929
+# def seasonal_plot(X, y, period, freq, ax=None):
+#     if ax is None:
+#         _, ax = plt.subplots()
+#     palette = sns.color_palette("husl", n_colors=X[period].nunique(),)
+#     ax = sns.lineplot(
+#         x=freq,
+#         y=y,
+#         hue=period,
+#         data=X,
+#         ci=False,
+#         ax=ax,
+#         palette=palette,
+#         legend=False,
+#     )
+#     ax.set_title(f"Seasonal Plot ({period}/{freq})")
+#     for line, name in zip(ax.lines, X[period].unique()):
+#         y_ = line.get_ydata()[-1]
+#         ax.annotate(
+#             name,
+#             xy=(1, y_),
+#             xytext=(6, 0),
+#             color=line.get_color(),
+#             xycoords=ax.get_yaxis_transform(),
+#             textcoords="offset points",
+#             size=14,
+#             va="center",
+#         )
+#     return ax
