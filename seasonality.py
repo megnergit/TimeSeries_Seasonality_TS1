@@ -31,6 +31,19 @@
 # |  * Manupulation of index.
 # |  * 'DeterministicProcess` in 'statsmodels' package as 'time dummy'.
 # |
+# | Index in other types of data is just convenient unique address
+# | of a record to identify it. Since indices  do not contain
+# | useful information, they are usually dropped in the machine learning.
+# | On the contray, index has special meaning in the time sequence anlysis.
+# | It is the feature needed for the prediction.
+# | The manupulatino of index in time sequence analysis include
+
+# | - Date parsing
+# | - Set date as index
+# | - Set period of date to 'D' (or 'M', 'W )
+# |   + (offset aliases)[https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases]
+# | - Set `dtype` (category features to `category`)
+# |
 # | The only features (except categorical ones) used to model the temporal
 # | behaviour of the target is time. But time in different intervals.
 # | 'DeterministicProcess` is used to quickly create `t` in `y=f(t)`.
@@ -53,30 +66,34 @@
 # | in Switzerland each day from November 2003 to November 2005.
 #
 # | ## 3. Notebook
-# | -------------------------------------
+# -------------------------------------------------------
 # | Import packages.
-
-import os
-from pathlib import Path
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
-
-import plotly.graph_objs as go
+from kaggle_tsa.ktsa import *
 from IPython.display import display
-
+import plotly.graph_objs as go
+import kaleido
+from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
+from sklearn.linear_model import LinearRegression
+import pandas as pd
+import numpy as np
+from pathlib import Path
 import os
 
-
-import sklearn
-sklearn.__version__
-
+# -------------------------------------------------------
 # | Set up directories.
+CWD = Path('/Users/meg/git7/trend/')
+DATA_DIR = Path('../input/ts-course-data/')
+KAGGLE_DIR = Path('ryanholbrook/ts-course-data/')
+IMAGE_DIR = Path('./images')
+HTML_DIR = Path('./html')
 
-DATA_DIR = Path('../input/ts-courses-data')
-CWD
+os.chdir(CWD)
+set_cwd(CWD)
 
+set_data_dir(KAGGLE_DIR, CWD)
+show_whole_dataframe(True)
+
+# -------------------------------------------------------
 # | Read the data, first as it is.
 
 tunnel = pd.read_csv(DATA_DIR/'tunnel.csv')
@@ -84,110 +101,97 @@ tunnel = pd.read_csv(DATA_DIR/'tunnel.csv')
 # | Check the contents.
 
 print(tunnel.info())
-
 display(tunnel.head(3))
 
+# | Index manipulation. Parsing. Currently `Day` column is taknen as
+# | `object` type (=string). We will convert it to `datetime` type.
+# | In the same time `Day` column is set to be the index.
+# | The frequency of the index is now set to 'D' (=calendar day frequency).
+# | By setting the frequency, when we use `.shift(1)` to the dataframe,
+# | the dataframe will be shifted by that amount in the unit of specified
+# | freqency. The `dtype`  of `NumVehicles` is set to 'float32'
+# |
 
-# Knowing how Fourier features are computed isn't essential to using them, but if seeing the details would clarify things, the cell hidden cell below illustrates how a set of Fourier features could be derived from the index of a time series. (We'll use a library function from `statsmodels` for our applications, however.)
+tunnel = pd.read_csv(DATA_DIR/'tunnel.csv',
+                     dtype={'NumVehicles': 'float32'},
+                     parse_dates=['Day'],
+                     index_col='Day').to_period('D')
 
-# In[1]:
+print(tunnel.info())
+print(tunnel.index)
+display(tunnel.head(3))
 
+# -------------------------------------------------------
+# | Let us have a quick look af the data.
 
-def fourier_features(index, freq, order):
-    time = np.arange(len(index), dtype=np.float32)
-    k = 2 * np.py * (1/freq) * time
-    features = {}
-    for i in range(1, order+1):
-        features.update({
-            f'sin_{freq}_{i}': np.sin(i*k),
-            f'cos_{freq}_{i}': np.cos(i*k),
-        })
-    return pd.DataFrame(features, index=index)
+trace_1 = go.Scatter(x=tunnel.index.to_timestamp(),
+                     y=tunnel['NumVehicles'],
+                     name='Tunnel traffic')
 
+data = [trace_1]
+layout = go.Layout(height=512)
+fig = go.Figure(data=data, layout=layout)
+embed_plot(fig, HTML_DIR/'p_1.html')
+fig.show()
+# fig.write_image(IMAGE_DIR/'fig1.png')
 
-# In[2]:
-
-
-def fourier_features(index, freq, order):
-    time = np.arange(len(index), dtype=np.float32)
-    k = 2 * np.pi * (1 / freq) * time
-    features = {}
-    for i in range(1, order + 1):
-        features.update({
-            f"sin_{freq}_{i}": np.sin(i * k),
-            f"cos_{freq}_{i}": np.cos(i * k),
-        })
-    return pd.DataFrame(features, index=index)
-
-
-# Compute Fourier features to the 4th order (8 new features) for a
-# series y with daily observations and annual seasonality:
-#
-# fourier_features(y, freq=365.25, order=4)
-
-
-# Example - Tunnel Traffic #
-#
-# We'll continue once more with the *Tunnel Traffic* dataset. This hidden cell loads the data and defines two functions: `seasonal_plot` and `plot_periodogram`.
-
-# In[ ]:
-
-
-# In[3]:
+# -------------------------------------------------------
+# | One can see
+# |
+# | - Weekly trend (in-week common trend).
+# | - In-year trend. Decrease of traffic  during
+# |    + Christman holidays
+# |    + Easter holidays
+# |    + Summer vacations
+# |
+# | Here we concentrate on reproducing in-week trend.
+# | First let us have a look.
 
 
-simplefilter("ignore")
+X = tunnel.copy()
 
-# Set Matplotlib defaults
-plt.style.use("seaborn-whitegrid")
-plt.rc("figure", autolayout=True, figsize=(11, 5))
-plt.rc(
-    "axes",
-    labelweight="bold",
-    labelsize="large",
-    titleweight="bold",
-    titlesize=16,
-    titlepad=10,
-)
-plot_params = dict(
-    color="0.75",
-    style=".-",
-    markeredgecolor="0.25",
-    markerfacecolor="0.25",
-    legend=False,
-)
-get_ipython().run_line_magic('config', "InlineBackend.figure_format = 'retina'")
+# days within a week
+X["day"] = X.index.dayofweek  # the x-axis (freq)
+X["week"] = X.index.week  # the seasonal period (period)
+
+# days within a year
+X["dayofyear"] = X.index.dayofyear
+X["year"] = X.index.year
+
+# -------------------------------------------------------
+# =======================================================
+
+# # annotations: https://stackoverflow.com/a/49238256/5769929
 
 
-# annotations: https://stackoverflow.com/a/49238256/5769929
-def seasonal_plot(X, y, period, freq, ax=None):
-    if ax is None:
-        _, ax = plt.subplots()
-    palette = sns.color_palette("husl", n_colors=X[period].nunique(),)
-    ax = sns.lineplot(
-        x=freq,
-        y=y,
-        hue=period,
-        data=X,
-        ci=False,
-        ax=ax,
-        palette=palette,
-        legend=False,
-    )
-    ax.set_title(f"Seasonal Plot ({period}/{freq})")
-    for line, name in zip(ax.lines, X[period].unique()):
-        y_ = line.get_ydata()[-1]
-        ax.annotate(
-            name,
-            xy=(1, y_),
-            xytext=(6, 0),
-            color=line.get_color(),
-            xycoords=ax.get_yaxis_transform(),
-            textcoords="offset points",
-            size=14,
-            va="center",
-        )
-    return ax
+# def seasonal_plot(X, y, period, freq, ax=None):
+#     if ax is None:
+#         _, ax = plt.subplots()
+#     palette = sns.color_palette("husl", n_colors=X[period].nunique(),)
+#     ax = sns.lineplot(
+#         x=freq,
+#         y=y,
+#         hue=period,
+#         data=X,
+#         ci=False,
+#         ax=ax,
+#         palette=palette,
+#         legend=False,
+#     )
+#     ax.set_title(f"Seasonal Plot ({period}/{freq})")
+#     for line, name in zip(ax.lines, X[period].unique()):
+#         y_ = line.get_ydata()[-1]
+#         ax.annotate(
+#             name,
+#             xy=(1, y_),
+#             xytext=(6, 0),
+#             color=line.get_color(),
+#             xycoords=ax.get_yaxis_transform(),
+#             textcoords="offset points",
+#             size=14,
+#             va="center",
+#         )
+#     return ax
 
 
 def plot_periodogram(ts, detrend='linear', ax=None):
@@ -306,3 +310,74 @@ _ = ax.legend()
 # # Your Turn #
 #
 # [**Create seasonal features for Store Sales**](https://www.kaggle.com/kernels/fork/19615991) and extend these techniques to capturing holiday effects.
+
+
+# Knowing how Fourier features are computed isn't essential to using them, but if seeing the details would clarify things, the cell hidden cell below illustrates how a set of Fourier features could be derived from the index of a time series. (We'll use a library function from `statsmodels` for our applications, however.)
+
+# # In[1]:
+
+
+# def fourier_features(index, freq, order):
+#     time = np.arange(len(index), dtype=np.float32)
+#     k = 2 * np.py * (1/freq) * time
+#     features = {}
+#     for i in range(1, order+1):
+#         features.update({
+#             f'sin_{freq}_{i}': np.sin(i*k),
+#             f'cos_{freq}_{i}': np.cos(i*k),
+#         })
+#     return pd.DataFrame(features, index=index)
+
+
+# # In[2]:
+
+
+# def fourier_features(index, freq, order):
+#     time = np.arange(len(index), dtype=np.float32)
+#     k = 2 * np.pi * (1 / freq) * time
+#     features = {}
+#     for i in range(1, order + 1):
+#         features.update({
+#             f"sin_{freq}_{i}": np.sin(i * k),
+#             f"cos_{freq}_{i}": np.cos(i * k),
+#         })
+#     return pd.DataFrame(features, index=index)
+
+
+# # Compute Fourier features to the 4th order (8 new features) for a
+# # series y with daily observations and annual seasonality:
+# #
+# # fourier_features(y, freq=365.25, order=4)
+
+
+# # Example - Tunnel Traffic #
+# #
+# # We'll continue once more with the *Tunnel Traffic* dataset. This hidden cell loads the data and defines two functions: `seasonal_plot` and `plot_periodogram`.
+
+# # In[ ]:
+
+
+# # In[3]:
+
+
+# simplefilter("ignore")
+
+# # Set Matplotlib defaults
+# plt.style.use("seaborn-whitegrid")
+# plt.rc("figure", autolayout=True, figsize=(11, 5))
+# plt.rc(
+#     "axes",
+#     labelweight="bold",
+#     labelsize="large",
+#     titleweight="bold",
+#     titlesize=16,
+#     titlepad=10,
+# )
+# plot_params = dict(
+#     color="0.75",
+#     style=".-",
+#     markeredgecolor="0.25",
+#     markerfacecolor="0.25",
+#     legend=False,
+# )
+# get_ipython().run_line_magic('config', "InlineBackend.figure_format = 'retina'")
