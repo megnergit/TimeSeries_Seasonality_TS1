@@ -1,10 +1,11 @@
-# geopandas==0.10.2
-# geopy==2.2.0
-# Shapely==1.6.4.post1
-# folium==0.12.1
+scipy==1.7.1
+sklearn==0.24.2
+statsmodels==0.13.0
+xgboost==1.5.0
 plotly==5.3.1
 pretty-errors==1.2.20
-statsmodels==0.12.2
 kaggle==1.5.12
+
+
 
 
