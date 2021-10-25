@@ -177,7 +177,18 @@ fig.show()
 # | and decreases toward Saturday and Sunday.
 # -------------------------------------------------------
 
+# - check if index is continuous and no missing date
+
 # =======================================================
+
+fs = pd.Timedelta('1Y')/pd.Timedelta('1D')
+frequencies, spectrum = periodogram(
+
+    fs=fs,
+    detrend='linear',
+    window='boxcar',
+    scalint='spectrum'
+)
 
 
 def plot_periodogram(ts, detrend='linear', ax=None):
