@@ -68,22 +68,26 @@
 # | ## 3. Notebook
 # -------------------------------------------------------
 # | Import packages.
+
+from pathlib import Path
+import os
+import pandas as pd
+import numpy as np
+
+from scipy.signal import periodogram
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
+from statsmodels.graphics.tsaplots import plot_pacf
+from statsmodels.tsa.stattools import pacf
+import statsmodels.api as sm
+
 from kaggle_tsa.ktsa import *
 from IPython.display import display
 import plotly.graph_objs as go
-import kaleido
-from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
-from sklearn.linear_model import LinearRegression
-from scipy.signal import periodogram
-import pandas as pd
-import numpy as np
-from pathlib import Path
-import os
-
-from statsmodels.graphics.tsaplots import plot_pacf
-from statsmodels.tsa.stattools import pacf
 from plotly.subplots import make_subplots
-import statsmodels.api as sm
+import kaleido
 
 
 # -------------------------------------------------------
@@ -355,53 +359,83 @@ dp = DeterministicProcess(
 X = dp.in_sample()  # create features for dates in tunnel.index
 display(X.head(3))
 
-# -------------------------------------------------------
-# 10 sin/cos pairs for "A"nnual seasonality
-# Let's take a look at seasonal plots over a week and over a year.
-# X = tunnel.copy()
-# # days within a week
-# X["day"] = X.index.dayofweek  # the x-axis (freq)
-# X["week"] = X.index.week  # the seasonal period (period)
+y = tunnel['NumVehicles']
+model = LinearRegression()
+model.fit(X, y)
+y_fit = model.predict(X)
 
-# # days within a year
-# X["dayofyear"] = X.index.dayofyear
-# X["year"] = X.index.year
-# fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(11, 6))
-# seasonal_plot(X, y="NumVehicles", period="week", freq="day", ax=ax0)
-# seasonal_plot(X, y="NumVehicles", period="year", freq="dayofyear", ax=ax1)
+trace_1 = go.Scatter(x=X.index.to_timestamp(),
+                     y=y,
+                     line=dict(color='teal'),
+                     mode='lines')
 
+trace_2 = go.Scatter(x=X.index.to_timestamp(),
+                     y=y_fit,
+                     line=dict(color='coral'),
+                     mode='lines')
 
-# lagplot
+data = [trace_1, trace_2]
 
-# plot_periodogram(tunnel.NumVehicles)
+layout = go.Layout(height=512, width=2048,
+                   font=dict(size=20),
+                   showlegend=False)
 
+fig = go.Figure(data=data, layout=layout)
+fig.show()
+# # -------------------------------------------------------
+# | Training
 
-# The periodogram agrees with the seasonal plots above: a strong weekly season and a weaker annual season. The weekly season we'll model with indicators and the annual season with Fourier features. From right to left, the periodogram falls off between *Bimonthly (6)* and *Monthly (12)*, so let's use 10 Fourier pairs.
-#
-# We'll create our seasonal features using `DeterministicProcess`, the same utility we used in Lesson 2 to create trend features. To use two seasonal periods (weekly and annual), we'll need to instantiate one of them as an "additional term":
-
-# In[6]:
-
-
-# With our feature set created, we're ready to fit the model and make predictions. We'll add a 90-day forecast to see how our model extrapolates beyond the training data. The code here is the same as that in earlier lessons.
-
-# In[7]:
+train_rmse = mean_squared_error(y, y_fit, squared=False)
+print(f'RMSE : \033[96m{train_rmse:6.2f}\033[0m')
 
 
-y = tunnel["NumVehicles"]
+# # -------------------------------------------------------
+# # 10 sin/cos pairs for "A"nnual seasonality
+# # Let's take a look at seasonal plots over a week and over a year.
+# # X = tunnel.copy()
+# # # days within a week
+# # X["day"] = X.index.dayofweek  # the x-axis (freq)
+# # X["week"] = X.index.week  # the seasonal period (period)
 
-model = LinearRegression(fit_intercept=False)
-_ = model.fit(X, y)
+# # # days within a year
+# # X["dayofyear"] = X.index.dayofyear
+# # X["year"] = X.index.year
+# # fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(11, 6))
+# # seasonal_plot(X, y="NumVehicles", period="week", freq="day", ax=ax0)
+# # seasonal_plot(X, y="NumVehicles", period="year", freq="dayofyear", ax=ax1)
 
-y_pred = pd.Series(model.predict(X), index=y.index)
-X_fore = dp.out_of_sample(steps=90)
-y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
 
-ax = y.plot(color='0.25', style='.',
-            title="Tunnel Traffic - Seasonal Forecast")
-ax = y_pred.plot(ax=ax, label="Seasonal")
-ax = y_fore.plot(ax=ax, label="Seasonal Forecast", color='C3')
-_ = ax.legend()
+# # lagplot
+
+# # plot_periodogram(tunnel.NumVehicles)
+
+
+# # The periodogram agrees with the seasonal plots above: a strong weekly season and a weaker annual season. The weekly season we'll model with indicators and the annual season with Fourier features. From right to left, the periodogram falls off between *Bimonthly (6)* and *Monthly (12)*, so let's use 10 Fourier pairs.
+# #
+# # We'll create our seasonal features using `DeterministicProcess`, the same utility we used in Lesson 2 to create trend features. To use two seasonal periods (weekly and annual), we'll need to instantiate one of them as an "additional term":
+
+# # In[6]:
+
+
+# # With our feature set created, we're ready to fit the model and make predictions. We'll add a 90-day forecast to see how our model extrapolates beyond the training data. The code here is the same as that in earlier lessons.
+
+# # In[7]:
+
+
+# y = tunnel["NumVehicles"]
+
+# model = LinearRegression(fit_intercept=False)
+# _ = model.fit(X, y)
+
+# y_pred = pd.Series(model.predict(X), index=y.index)
+# X_fore = dp.out_of_sample(steps=90)
+# y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
+
+# ax = y.plot(color='0.25', style='.',
+#             title="Tunnel Traffic - Seasonal Forecast")
+# ax = y_pred.plot(ax=ax, label="Seasonal")
+# ax = y_fore.plot(ax=ax, label="Seasonal Forecast", color='C3')
+# _ = ax.legend()
 
 
 # ---
