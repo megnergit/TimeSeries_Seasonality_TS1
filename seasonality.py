@@ -80,6 +80,12 @@ import numpy as np
 from pathlib import Path
 import os
 
+from statsmodels.graphics.tsaplots import plot_pacf
+from statsmodels.tsa.stattools import pacf
+from plotly.subplots import make_subplots
+import statsmodels.api as sm
+
+
 # -------------------------------------------------------
 # | Set up directories.
 CWD = Path('/Users/meg/git7/trend/')
@@ -176,10 +182,23 @@ fig.show()
 # | the trafic gradually goes up from Monday to Friday,
 # | and decreases toward Saturday and Sunday.
 # -------------------------------------------------------
+# =======================================================
+# | we will make two more pltos.
+# | 1. periodogram
+# | 2. lagplot
 
 # - check if index is continuous and no missing date
 # =======================================================
 
+annual_freq = (
+    'Annual (1)',
+    'Semiannual (2)',
+    'Quarterly (4)',
+    'Bimonthly (6)',
+    'Monthly (12)',
+    'Biweekly (26)',
+    'Weekly (52)',
+    'Semiweekly (104)')
 
 fs = pd.Timedelta('1Y')/pd.Timedelta('1D')
 frequencies, spectrum = periodogram(tunnel['NumVehicles'],
@@ -199,7 +218,12 @@ trace = go.Scatter(x=frequencies,
 data = [trace]
 layout = go.Layout(height=640,
                    font=dict(size=20),
-                   xaxis=dict(type='log'))
+                   xaxis=dict(type='log',
+                              ticktext=annual_freq,
+                              tickvals=[1, 2, 4, 6, 12, 26, 52, 104]))
+#                              categoryorder='array')
+#                              categoryarray=annual_freq,
+#                             categoryorder='array'))
 
 fig = go.Figure(data=data, layout=layout)
 fig.show()
@@ -209,83 +233,114 @@ fig.show()
 # | [shape of window functon](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window)
 # | scaling {'density', 'spectrum'} [V^2/Hz] (power spectrum) [V^2]
 
+# -------------------------------------------------------
+# | We can see
+# | * strong weekly repetitions, and
+# | * annual, semiannual, and quaterly trend.
+# |
 
-# from  scipy.signal import get_window
-# =======================================================
+# -------------------------------------------------------
+# | Next, a lag plot.
 
+n_lag = 12
+n_cols = 3
+n_rows = n_lag // n_cols
+sm.OLS.df_degree = 1
+fig = make_subplots(cols=n_cols,
+                    rows=n_rows,
+                    vertical_spacing=0.04,
+                    subplot_titles=[f'Lag {i}' for i in range(1, n_lag+1)]
+                    )
 
-def plot_periodogram(ts, detrend='linear', ax=None):
-    from scipy.signal import periodogram
-    fs = pd.Timedelta("1Y") / pd.Timedelta("1D")
-    freqencies, spectrum = periodogram(
-        ts,
-        fs=fs,
-        detrend=detrend,
-        window="boxcar",
-        scaling='spectrum',
-    )
-    if ax is None:
-        _, ax = plt.subplots()
-    ax.step(freqencies, spectrum, color="purple")
-    ax.set_xscale("log")
-    ax.set_xticks([1, 2, 4, 6, 12, 26, 52, 104])
-    ax.set_xticklabels(
-        [
-            "Annual (1)",
-            "Semiannual (2)",
-            "Quarterly (4)",
-            "Bimonthly (6)",
-            "Monthly (12)",
-            "Biweekly (26)",
-            "Weekly (52)",
-            "Semiweekly (104)",
-        ],
-        rotation=30,
-    )
-    ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-    ax.set_ylabel("Variance")
-    ax.set_title("Periodogram")
-    return ax
+xax = ['x' + str(i) for i in range(1, n_lag+1)]
+xax[0] = 'x'
 
+yax = ['y' + str(i) for i in range(1, n_lag+1)]
+yax[0] = 'y'
 
-data_dir = Path("../input/ts-course-data")
-tunnel = pd.read_csv(data_dir / "tunnel.csv", parse_dates=["Day"])
-tunnel = tunnel.set_index("Day").to_period("D")
+trace = [go.Scatter(x=tunnel['NumVehicles'],
+                    y=tunnel['NumVehicles'].shift(i),
+                    marker=dict(opacity=0.7),
+                    mode='markers',
+                    xaxis=xax[i-1],
+                    yaxis=yax[i-1]) for i in range(1, n_lag+1)]
 
+trace_reg = [go.Scatter(x=sorted(tunnel['NumVehicles']),
+                        y=sorted(sm.OLS(tunnel['NumVehicles'].shift(i).values,
+                                        tunnel['NumVehicles'],
+                                        missing='drop').fit().fittedvalues),
+                        mode='lines',
+                        xaxis=xax[i-1], yaxis=yax[i-1]) for i in range(1, n_lag+1)]
 
-# Let's take a look at seasonal plots over a week and over a year.
+data = trace + trace_reg
+layout = go.Layout(height=1024 * 2,
+                   font=dict(size=20),
+                   showlegend=False)
 
-# X = tunnel.copy()
+layout = fig.layout.update(layout)
+fig = go.Figure(data=data, layout=layout)
+fig.show()
 
-# # days within a week
-# X["day"] = X.index.dayofweek  # the x-axis (freq)
-# X["week"] = X.index.week  # the seasonal period (period)
+corr = [tunnel['NumVehicles'].autocorr(lag=i) for i in range(1, n_lag+1)]
 
-# # days within a year
-# X["dayofyear"] = X.index.dayofyear
-# X["year"] = X.index.year
-# fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(11, 6))
-# seasonal_plot(X, y="NumVehicles", period="week", freq="day", ax=ax0)
-# seasonal_plot(X, y="NumVehicles", period="year", freq="dayofyear", ax=ax1)
+_ = [print(f'Lag {i:-2}: {tunnel["NumVehicles"].autocorr(lag=i):5.3f}')
+     for i in range(1, n_lag+1)]
 
-# =======================================================
-# | we will make two more pltos.
-# | 1. periodogram
-# | 2. lagplot
+# -------------------------------------------------------
+# | There are 3 components seen in Lag 1 plot.
+# |
+# | - a bit increased from the day before
+# | - a bit dereased from the day before
+# | - about the same from the day before
+# |
+# | There are 3 components seen in Lag 1 plot.
+# | The correlation is higher in 7 days lag than 1 day lat.
+# | It corresponds to the weekly repetitions of the traffic.
+# |
 
-# lagplot
+# -------------------------------------------------------
+# Partial autocorrelation function.
 
-plot_periodogram(tunnel.NumVehicles)
+fig = plot_pacf(tunnel['NumVehicles'], lags=12)
+fig.show()
 
+x_pacf, x_conf = pacf(tunnel['NumVehicles'], nlags=12, alpha=0.05)
+x_error = (x_conf - x_pacf.repeat(2).reshape(x_conf.shape))[:, 1]
+x_sig = 1.96 / np.sqrt(len(tunnel['NumVehicles']))
 
-# The periodogram agrees with the seasonal plots above: a strong weekly season and a weaker annual season. The weekly season we'll model with indicators and the annual season with Fourier features. From right to left, the periodogram falls off between *Bimonthly (6)* and *Monthly (12)*, so let's use 10 Fourier pairs.
-#
-# We'll create our seasonal features using `DeterministicProcess`, the same utility we used in Lesson 2 to create trend features. To use two seasonal periods (weekly and annual), we'll need to instantiate one of them as an "additional term":
+lags_name = [f'Lag {i-1}' for i in range(1, n_lag+1)]
 
-# In[6]:
+trace_1 = go.Bar(y=lags_name,
+                 error_x=dict(type='data', array=x_error),
+                 x=x_pacf,
+                 marker_color='indianred',
+                 opacity=0.8,
+                 width=0.8,
+                 orientation='h')
 
+trace_2a = go.Scatter(y=[lags_name[0],
+                         lags_name[-1],
+                         lags_name[-1],
+                         lags_name[0],
+                         lags_name[0]],
+                      x=[-x_sig, -x_sig, x_sig, x_sig, -x_sig],
+                      line=dict(color='teal'),
+                      fill='toself',
+                      mode='lines')
 
-# 10 sin/cos pairs for "A"nnual seasonality
+layout = go.Layout(height=512, width=800,
+                   font=dict(size=20),
+                   showlegend=False,
+                   xaxis=dict(range=[-1.1, 1.1]))
+
+data = [trace_1, trace_2a]
+
+fig = go.Figure(data=data, layout=layout)
+fig.show()
+
+# -------------------------------------------------------
+# | Let us take 10 frequencies of Fourier decompositions
+
 fourier = CalendarFourier(freq="A", order=10)
 
 dp = DeterministicProcess(
@@ -298,6 +353,34 @@ dp = DeterministicProcess(
 )
 
 X = dp.in_sample()  # create features for dates in tunnel.index
+display(X.head(3))
+
+# -------------------------------------------------------
+# 10 sin/cos pairs for "A"nnual seasonality
+# Let's take a look at seasonal plots over a week and over a year.
+# X = tunnel.copy()
+# # days within a week
+# X["day"] = X.index.dayofweek  # the x-axis (freq)
+# X["week"] = X.index.week  # the seasonal period (period)
+
+# # days within a year
+# X["dayofyear"] = X.index.dayofyear
+# X["year"] = X.index.year
+# fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(11, 6))
+# seasonal_plot(X, y="NumVehicles", period="week", freq="day", ax=ax0)
+# seasonal_plot(X, y="NumVehicles", period="year", freq="dayofyear", ax=ax1)
+
+
+# lagplot
+
+# plot_periodogram(tunnel.NumVehicles)
+
+
+# The periodogram agrees with the seasonal plots above: a strong weekly season and a weaker annual season. The weekly season we'll model with indicators and the annual season with Fourier features. From right to left, the periodogram falls off between *Bimonthly (6)* and *Monthly (12)*, so let's use 10 Fourier pairs.
+#
+# We'll create our seasonal features using `DeterministicProcess`, the same utility we used in Lesson 2 to create trend features. To use two seasonal periods (weekly and annual), we'll need to instantiate one of them as an "additional term":
+
+# In[6]:
 
 
 # With our feature set created, we're ready to fit the model and make predictions. We'll add a 90-day forecast to see how our model extrapolates beyond the training data. The code here is the same as that in earlier lessons.
@@ -429,3 +512,45 @@ _ = ax.legend()
 #             va="center",
 #         )
 #     return ax
+
+# # from  scipy.signal import get_window
+# # =======================================================
+
+
+# def plot_periodogram(ts, detrend='linear', ax=None):
+#     from scipy.signal import periodogram
+#     fs = pd.Timedelta("1Y") / pd.Timedelta("1D")
+#     freqencies, spectrum = periodogram(
+#         ts,
+#         fs=fs,
+#         detrend=detrend,
+#         window="boxcar",
+#         scaling='spectrum',
+#     )
+#     if ax is None:
+#         _, ax = plt.subplots()
+#     ax.step(freqencies, spectrum, color="purple")
+#     ax.set_xscale("log")
+#     ax.set_xticks([1, 2, 4, 6, 12, 26, 52, 104])
+#     ax.set_xticklabels(
+#         [
+#             "Annual (1)",
+#             "Semiannual (2)",
+#             "Quarterly (4)",
+#             "Bimonthly (6)",
+#             "Monthly (12)",
+#             "Biweekly (26)",
+#             "Weekly (52)",
+#             "Semiweekly (104)",
+#         ],
+#         rotation=30,
+#     )
+#     ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+#     ax.set_ylabel("Variance")
+#     ax.set_title("Periodogram")
+#     return ax
+
+
+# data_dir = Path("../input/ts-course-data")
+# tunnel = pd.read_csv(data_dir / "tunnel.csv", parse_dates=["Day"])
+# tunnel = tunnel.set_index("Day").to_period("D")
