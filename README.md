@@ -4,8 +4,106 @@
 
 ## How to run the Demo
 
-1. `> python3 seasonality.py
+1. `> python3 seasonality.py`
 
+------------------------------------------------------------------
+## 1. Introduction
+
+This is a notebook to practice the routine procedures
+ commonly used in the time sequence analysis.
+
+ Temporal sequence consists of several components.
+ - Trend (gradual decrease / increase)
+ - Seasonality (hour of day, day of week, week of month, month of year, etc.)
+ - Cycles (up and down but with a specific time scale)
+ - Peculiarity (national holidays, etc.)
+
+
+ The list above is the whole features that one can
+ predict by time-sequence analysis and machine-learning models.
+ A model can predict what only repeats, i.e., what happened before.
+ A model cannot learn from what did not happen yet.
+
+ To deal with each elements of time sequence, we have
+
+ - For __trend__ : Analytical fitting of the baselines (linear, polynomial, etc)
+ - For __seasonality__ : Fourier decomposition.
+ - For __cycle__ : Lags.
+ - For __peculiarity__ : Categorical features.
+
+
+ In this notebook we will familiarize ourselves with
+
+  * Manipulation of index.
+  * 'DeterministicProcess` in 'statsmodels' package.
+    'DeterministicProcess` will be used to create 'time dummy'.
+
+
+ 'Time dummy's are the indices of target parameters.
+ Index in other types of data is just a convenient unique address
+ of a record to identify it. Since indices do not contain
+ any useful information, they are usually dropped during the machine learning.
+ On the contrary, index has special meaning in the time sequence analysis.
+ It is the feature needed for the prediction.
+
+ The manipulation of index in time sequence analysis include
+
+ * Date parsing
+ * Set date as index
+ * Set period of date to 'D' (or 'M', 'W )
+   + [offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-\
+aliases)
+ * Set `dtype` (category features to `category`)
+
+
+ The only features (except categorical ones) used to model the  temporal
+ behavior of the target parameter is the time, but the time in different
+ intervals.
+ 'DeterministicProcess` help us to quickly create `t` in `y=f(t)`.
+ It is called 'deterministic', because it is a feature that are prefixed.
+ One can use such features at the time of prediction, i.e.
+ if we would like to predict a sales on a Sunday, we can use the fact
+ that day is a Sunday. On the contrary, we cannot use a sales one day before,
+ on Saturday, if it is not published yet at the time the prediction.
+ The former (=being a Sunday) is a deterministic feature, while the sales on
+ Saturday is a non-deterministic feature.
+
+
+ ## 2. Task
+
+  We have a record of traffic of a tunnel. Model the temporal sequence of
+  the traffic from the time features only.
+
+ ## 3. Data
+
+ 1. A traffic of vehicles traveling through the Baregg Tunnel
+    in Switzerland from November 2003 to November 2005.
+
+------------------------------------------------------------------
+## Directory Tree
+```
+
+├── LICENSE
+├── README.md
+├── images
+│   ├── fig1.png
+│   ├── fig2.png
+│   ├── fig3.png
+│   ├── fig4.png
+│   ├── fig5.png
+│   └── fig6.png
+├── kaggle_tsa
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-38.pyc
+│   │   └── ktsa.cpython-38.pyc
+│   └── ktsa.py
+├── requirements.txt
+└── seasonality.py
+
+```
+* ktsa is a python module that contains functions used in the exercise. 
+------------------------------------------------------------------
 ## Output
 
 ![fig.1](./images/fig1.png)
@@ -114,106 +212,6 @@ Day
 2003-11-03            0.668064           -0.744104  
 RMSE : [96m5637.00[0m
 ```
-
-------------------------------------------------------------------
-## 1. Introduction
-
-This is a notebook to practice the routine procedures
- commonly used in the time sequence analysis.
-
- Temporal sequence consists of several components.
- - Trend (gradual decrease / increase)
- - Seasonality (hour of day, day of week, week of month, month of year, etc.)
- - Cycles (up and down but with a specific time scale)
- - Peculiarity (national holidays, etc.)
-
-
- The list above is the whole features that one can
- predict by time-sequence analysis and machine-learning models.
- A model can predict what only repeats, i.e., what happened before.
- A model cannot learn from what did not happen yet.
-
- To deal with each elements of time sequence, we have
-
- - For __trend__ : Analytical fitting of the baselines (linear, polynomial, etc)
- - For __seasonality__ : Fourier decomposition.
- - For __cycle__ : Lags.
- - For __peculiarity__ : Categorical features.
-
-
- In this notebook we will familiarize ourselves with
-
-  * Manipulation of index.
-  * 'DeterministicProcess` in 'statsmodels' package.
-    'DeterministicProcess` will be used to create 'time dummy'.
-
-
- 'Time dummy's are the indices of target parameters.
- Index in other types of data is just a convenient unique address
- of a record to identify it. Since indices do not contain
- any useful information, they are usually dropped during the machine learning.
- On the contrary, index has special meaning in the time sequence analysis.
- It is the feature needed for the prediction.
-
- The manipulation of index in time sequence analysis include
-
- * Date parsing
- * Set date as index
- * Set period of date to 'D' (or 'M', 'W )
-   + [offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-\
-aliases)
- * Set `dtype` (category features to `category`)
-
-
- The only features (except categorical ones) used to model the  temporal
- behavior of the target parameter is the time, but the time in different
- intervals.
- 'DeterministicProcess` help us to quickly create `t` in `y=f(t)`.
- It is called 'deterministic', because it is a feature that are prefixed.
- One can use such features at the time of prediction, i.e.
- if we would like to predict a sales on a Sunday, we can use the fact
- that day is a Sunday. On the contrary, we cannot use a sales one day before,
- on Saturday, if it is not published yet at the time the prediction.
- The former (=being a Sunday) is a deterministic feature, while the sales on
- Saturday is a non-deterministic feature.
-
-
- ## 2. Task
-
-  We have a record of traffic of a tunnel. Model the temporal sequence of
-  the traffic from the time features only.
-
- ## 3. Data
-
- 1. A traffic of vehicles traveling through the Baregg Tunnel
-    in Switzerland from November 2003 to November 2005.
-
-------------------------------------------------------------------
-## Directory Tree
-```
-
-├── LICENSE
-├── README.md
-├── images
-│   ├── fig1.png
-│   ├── fig2.png
-│   ├── fig3.png
-│   ├── fig4.png
-│   ├── fig5.png
-│   └── fig6.png
-├── kaggle_tsa
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   ├── __init__.cpython-38.pyc
-│   │   └── ktsa.cpython-38.pyc
-│   └── ktsa.py
-├── requirements.txt
-└── seasonality.py
-
-```
-* `html` directory in the repo is intentionally kept empty. It will be
-   filled when the Python demo ran successfully. 
-* kgsp is a python module that contains functions used in the exercise. 
 ------------------------------------------------------------------
 END
 
