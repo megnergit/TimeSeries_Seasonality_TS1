@@ -80,6 +80,17 @@ def embed_plot(fig, file_name):
     return IFrame(file_name, width='100%', height='500px')
 
 
+def fig_wrap(fig, file_name):
+    from IPython import get_ipython
+    is_jupyter = get_ipython().__class__.__name__
+    if is_jupyter == 'NoneType':
+        fig.write_image(file_name)
+        return fig.show()
+
+    else:
+        return fig
+
+
 def show_on_browser(m, file_name):
     '''
     m   : folium Map object

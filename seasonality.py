@@ -42,7 +42,7 @@
 # | It is the feature needed for the prediction.
 
 # | The manipulation of index in time sequence analysis include
-# | 
+# |
 # | * Date parsing
 # | * Set date as index
 # | * Set period of date to 'D' (or 'M', 'W )
@@ -155,9 +155,7 @@ data = [trace_1]
 layout = go.Layout(height=512)
 fig = go.Figure(data=data, layout=layout)
 
-fig.show()
-fig.write_image(IMAGE_DIR/'fig1.png')
-
+fig_wrap(fig, IMAGE_DIR/'fig1.png')
 # -------------------------------------------------------
 # | One can see
 # |
@@ -167,6 +165,7 @@ fig.write_image(IMAGE_DIR/'fig1.png')
 # |    + Easter holidays
 # |    + Summer vacations
 # |
+
 # | Here we concentrate on reproducing in-week trend.
 # | First let us have a look.
 
@@ -181,18 +180,18 @@ tunnel['Week'] = tunnel.index.asfreq('W')
 data = []
 day_name = ('Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So')
 
+
 for i, w in tunnel.groupby('Week'):
     trace = go.Scatter(x=w['dayofweek'],
                        y=w['NumVehicles'],
-                       name=i)
+                       name=str(i))
 
     data.append(trace)
 
 layout = go.Layout(height=1024,
                    xaxis=dict(categoryarray=day_name))
 fig = go.Figure(data=data, layout=layout)
-fig.show()
-fig.write_image(IMAGE_DIR/'fig2.png')
+fig_wrap(fig, IMAGE_DIR/'fig2.png')
 
 # -------------------------------------------------------
 # | The trend is nicely seen in which
@@ -205,7 +204,7 @@ fig.write_image(IMAGE_DIR/'fig2.png')
 # | 2. lagplot (although we do not use lag feature here)
 
 # | [To-do : function to check if the index is continuous and no missing dates.]
-# | 
+# |
 
 annual_freq = (
     'Annual (1)',
@@ -228,9 +227,8 @@ frequencies, spectrum = periodogram(tunnel['NumVehicles'],
 # |__`periodogram`__:\
 # | `detrend` {'linear', 'constant'}\
 # | `window`  {'boxcar', 'gaussian', ...} `scipy.signal.get_window`[shape of window function](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window)\
-# | `scaling` {'density', 'spectrum'}\  
-# | The units are [V<sup>2</sup>/Hz] for 'density' (power spectrum)\
-# | and [V<sup>2</sup>] for 'spectrum'.
+# | `scaling` {'density', 'spectrum'}\
+# | The units are [V<sup>2</sup>/Hz] for 'density' (power spectrum) and [V<sup>2</sup>] for 'spectrum'.
 
 trace = go.Scatter(x=frequencies,
                    y=spectrum,
@@ -246,8 +244,8 @@ layout = go.Layout(height=640,
                               tickvals=[1, 2, 4, 6, 12, 26, 52, 104]))
 
 fig = go.Figure(data=data, layout=layout)
-fig.show()
-fig.write_image(IMAGE_DIR/'fig3.png')
+fig_wrap(fig, IMAGE_DIR/'fig3.png')
+
 # -------------------------------------------------------
 # | We can see
 # | * strong weekly repetitions, and
@@ -294,8 +292,7 @@ layout = go.Layout(height=1024 * 2,
 
 layout = fig.layout.update(layout)
 fig = go.Figure(data=data, layout=layout)
-fig.show()
-fig.write_image(IMAGE_DIR/'fig4.png')
+fig_wrap(fig, IMAGE_DIR/'fig4.png')
 
 corr = [tunnel['NumVehicles'].autocorr(lag=i) for i in range(1, n_lag+1)]
 
@@ -356,8 +353,7 @@ layout = go.Layout(height=512, width=800,
 data = [trace_1, trace_2a]
 
 fig = go.Figure(data=data, layout=layout)
-fig.show()
-fig.write_image(IMAGE_DIR/'fig5.png')
+fig_wrap(fig, IMAGE_DIR/'fig5.png')
 
 # -------------------------------------------------------
 # | Okay, let us come back to the seasonality, and Fourier decompositions.
@@ -407,8 +403,7 @@ layout = go.Layout(height=512, width=2048,
                    showlegend=False)
 
 fig = go.Figure(data=data, layout=layout)
-fig.show()
-fig.write_image(IMAGE_DIR/'fig6.png')
+fig_wrap(fig, IMAGE_DIR/'fig6.png')
 
 # -------------------------------------------------------
 # | Training error.
