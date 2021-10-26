@@ -51,8 +51,7 @@ This is a notebook to practice the routine procedures
  * Date parsing
  * Set date as index
  * Set period of date to 'D' (or 'M', 'W )
-   + [offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-\
-aliases)
+   + [offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases)
  * Set `dtype` (category features to `category`)
 
 
