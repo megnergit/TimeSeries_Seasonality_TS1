@@ -206,6 +206,7 @@ fig_wrap(fig, IMAGE_DIR/'fig2.png')
 # | [To-do : function to check if the index is continuous and no missing dates.]
 # |
 
+
 annual_freq = (
     'Annual (1)',
     'Semiannual (2)',
