@@ -9,8 +9,13 @@
 ------------------------------------------------------------------
 ## 1. Introduction
 
-This is a notebook to practice the routine procedures
- commonly used in the time sequence analysis.
+This is a part of tutorial project offered at Kaggle
+by Ryan Holbrook and Alexis Cook.
+https://www.kaggle.com/code/ryanholbrook/seasonality
+
+We will to practice the routine procedures
+commonly used in the time sequence analysis.
+
 
  Temporal sequence consists of several components.
  - Trend (gradual decrease / increase)
