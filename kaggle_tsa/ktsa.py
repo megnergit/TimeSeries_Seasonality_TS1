@@ -286,44 +286,44 @@ def show_training_results(X, y, X_train, y_fit, X_test, y_pred,
     return fig
 
 
-# -------------------------------------------------------
-# periodogram
-annual_freq = (
-    'Annual (1)',
-    'Semiannual (2)',
-    'Quarterly (4)',
-    'Bimonthly (6)',
-    'Monthly (12)',
-    'Biweekly (26)',
-    'Weekly (52)',
-    'Semiweekly (104)')
+# # -------------------------------------------------------
+# # periodogram
+# annual_freq = (
+#     'Annual (1)',
+#     'Semiannual (2)',
+#     'Quarterly (4)',
+#     'Bimonthly (6)',
+#     'Monthly (12)',
+#     'Biweekly (26)',
+#     'Weekly (52)',
+#     'Semiweekly (104)')
 
-fs = pd.Timedelta('1Y')/pd.Timedelta('1D')
-frequencies, spectrum = periodogram(tunnel['NumVehicles'],
-                                    fs=fs,
-                                    detrend='linear',
-                                    window='boxcar',
-                                    scaling='spectrum'
-                                    )
+# fs = pd.Timedelta('1Y')/pd.Timedelta('1D')
+# frequencies, spectrum = periodogram(tunnel['NumVehicles'],
+#                                     fs=fs,
+#                                     detrend='linear',
+#                                     window='boxcar',
+#                                     scaling='spectrum'
+#                                     )
 
-# |__`periodogram`__:\
-# | `detrend` {'linear', 'constant'}\
-# | `window`  {'boxcar', 'gaussian', ...} `scipy.signal.get_window`[shape of window function](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window)\
-# | `scaling` {'density', 'spectrum'}\
-# | The units are [V<sup>2</sup>/Hz] for 'density' (power spectrum) and [V<sup>2</sup>] for 'spectrum'.
+# # |__`periodogram`__:\
+# # | `detrend` {'linear', 'constant'}\
+# # | `window`  {'boxcar', 'gaussian', ...} `scipy.signal.get_window`[shape of window function](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window)\
+# # | `scaling` {'density', 'spectrum'}\
+# # | The units are [V<sup>2</sup>/Hz] for 'density' (power spectrum) and [V<sup>2</sup>] for 'spectrum'.
 
-trace = go.Scatter(x=frequencies,
-                   y=spectrum,
-                   fill='tozeroy',
-                   line=dict(color='coral'),
-                   line_shape='hvh')
+# trace = go.Scatter(x=frequencies,
+#                    y=spectrum,
+#                    fill='tozeroy',
+#                    line=dict(color='coral'),
+#                    line_shape='hvh')
 
-data = [trace]
-layout = go.Layout(height=640,
-                   font=dict(size=20),
-                   xaxis=dict(type='log',
-                              ticktext=annual_freq,
-                              tickvals=[1, 2, 4, 6, 12, 26, 52, 104]))
+# data = [trace]
+# layout = go.Layout(height=640,
+#                    font=dict(size=20),
+#                    xaxis=dict(type='log',
+#                               ticktext=annual_freq,
+#                               tickvals=[1, 2, 4, 6, 12, 26, 52, 104]))
 
-fig = go.Figure(data=data, layout=layout)
-fig_wrap(fig, IMAGE_DIR/'fig3.png')
+# fig = go.Figure(data=data, layout=layout)
+# fig_wrap(fig, IMAGE_DIR/'fig3.png')
