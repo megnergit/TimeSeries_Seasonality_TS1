@@ -13,7 +13,7 @@ This is a part of tutorial project offered at Kaggle
 by Ryan Holbrook and Alexis Cook.
 https://www.kaggle.com/code/ryanholbrook/seasonality
 
-We will to practice the routine procedures
+We will to practice here the routine procedures
 commonly used in the time sequence analysis.
 
 
